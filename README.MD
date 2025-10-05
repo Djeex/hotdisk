@@ -34,16 +34,32 @@ A lightweight Linux tool that monitors **SATA HDD temperatures**, sends **Discor
 **Quick Install with Curl**
 
 ```bash
-curl -fsSL https://git.djeex.fr/Djeex/hotdisk/raw/branch/main/sh/hotdisk_curl_install.sh | bash
+curl -fsSL https://git.djeex.fr/Djeex/hotdisk/raw/branch/main/sh/hotdisk_curl_install.sh | bash && sudo /usr/local/bin/install_hotdisk.sh
 ```
+
+This single command will:
+1. Download all scripts to `/usr/local/bin/`
+2. Run interactive installation with full customization prompts
+
+**Alternative Installation Options:**
+
+- **Download only**: `curl -fsSL https://git.djeex.fr/Djeex/hotdisk/raw/branch/main/sh/hotdisk_curl_install.sh | bash`
+- **Install after download**: `sudo /usr/local/bin/install_hotdisk.sh`
 
 The installer will:
 
-- Prompt for configuration: max temperature, cooldown, Discord webhook, log file, logrotate settings.
-- Check and install missing dependencies.
-- Generate logrotate configuration.
-- Install and enable systemd service + timer.
-- Run HotDisk immediately for testing.
+- Download and install all scripts to `/usr/local/bin/`
+- Check dependencies (smartmontools, curl, systemd)
+- Create configuration with defaults or prompt for custom values
+- Generate logrotate configuration for automatic log management
+- Install and enable systemd service + timer for continuous monitoring
+- Run HotDisk immediately for testing
+
+**Post-Installation (Non-Interactive Mode):**
+```bash
+sudo nano /etc/hdd_temp_monitor.conf  # Set your Discord webhook URL
+sudo systemctl restart hotdisk.timer   # Restart service with new config
+```
 
 **Check Logs**
 
@@ -73,10 +89,21 @@ Configuration is stored in `/etc/hdd_temp_monitor.conf` and is created by the in
 
 ## ❓ How it works
 
-1. The script reads SMART temperature for all SATA disks every minute.
-2. Counts consecutive minutes above/below threshold.
-3. Sends Discord notifications if threshold exceeded or cooled.
-4. Initiates system shutdown if temperature exceeds limit for configured duration.
-5. Logs all temperatures and counter states, rotates logs automatically.
+**Installation Process:**
+1. Downloads scripts to `/usr/local/bin/` (hotdisk.sh, hotdisk_logger.sh, install_hotdisk.sh)
+2. Detects if running interactively and prompts for configuration or uses defaults
+3. Creates `/etc/hdd_temp_monitor.conf` with monitoring settings
+4. Sets up systemd service (`hotdisk.service`) and timer (`hotdisk.timer`)
+5. Configures automatic log rotation via logrotate
+6. Enables and starts the monitoring service
+
+**Monitoring Process:**
+1. Runs every minute via systemd timer
+2. Discovers all SATA disks (excludes NVMe) using `lsblk` and `smartctl`
+3. Reads temperature for each disk via SMART attributes
+4. Tracks consecutive minutes above/below threshold in persistent state file
+5. Sends Discord notifications for temperature warnings and cool-downs
+6. Initiates safe system shutdown if critical temperature duration exceeded
+7. Logs all temperature readings with timestamps for analysis
 
 

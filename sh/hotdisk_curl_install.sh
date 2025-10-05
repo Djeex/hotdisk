@@ -21,4 +21,7 @@ for script in "${SCRIPTS[@]}"; do
     fi
     run_as_root chmod +x "/usr/local/bin/$script"
 done
-run_as_root /usr/local/bin/install_hotdisk.sh
+
+echo ""
+echo "📦 Scripts downloaded successfully to /usr/local/bin/"
+echo "🔧 Run installation with: sudo /usr/local/bin/install_hotdisk.sh"

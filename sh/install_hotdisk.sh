@@ -34,7 +34,25 @@ if [ ${#MISSING[@]} -ne 0 ]; then
     exit 1
 fi
 echo "✅ All dependencies are installed."
-read -p "Maximum temperature (°C) before shutdown [60]: " MAX_TEMP
+
+# Check if running interactively
+if [[ ! -t 0 ]] || [[ ! -t 1 ]]; then
+    echo "⚠️  Non-interactive mode detected. Using default values."
+    echo "To customize settings, run: /usr/local/bin/install_hotdisk.sh"
+    MAX_TEMP=60
+    HOT_DURATION=5
+    COOL_RESET_DURATION=5
+    LOG_FILE="/var/log/hdd_temp_monitor.log"
+    LOG_ROTATE_COUNT=7
+    LOG_ROTATE_PERIOD="daily"
+    echo ""
+    echo "⚠️  IMPORTANT: You must set your Discord webhook URL manually!"
+    echo "Edit /etc/hdd_temp_monitor.conf and add:"
+    echo "DISCORD_WEBHOOK=https://discord.com/api/webhooks/YOUR_WEBHOOK_URL"
+    echo "Then restart the service: sudo systemctl restart hotdisk.timer"
+    DISCORD_WEBHOOK="https://discord.com/api/webhooks/CHANGE_THIS"
+else
+    read -p "Maximum temperature (°C) before shutdown [60]: " MAX_TEMP
 MAX_TEMP=${MAX_TEMP:-60}
 if ! [[ "$MAX_TEMP" =~ ^[0-9]+$ ]] || [[ $MAX_TEMP -lt 1 || $MAX_TEMP -gt 100 ]]; then
     echo "ERROR: MAX_TEMP must be a number between 1-100" >&2
@@ -69,17 +87,18 @@ if [[ ! "$LOG_ROTATE_PERIOD" =~ ^(daily|weekly)$ ]]; then
     echo "ERROR: LOG_ROTATE_PERIOD must be 'daily' or 'weekly'" >&2
     exit 1
 fi
-echo "Paste your Discord Webhook URL here."
-read -p "Discord Webhook URL: " DISCORD_WEBHOOK
-if [[ -z "$DISCORD_WEBHOOK" ]]; then
-    echo "ERROR: Discord Webhook cannot be empty" >&2
-    exit 1
-fi
+    echo "Paste your Discord Webhook URL here."
+    read -p "Discord Webhook URL: " DISCORD_WEBHOOK
+    if [[ -z "$DISCORD_WEBHOOK" ]]; then
+        echo "ERROR: Discord Webhook cannot be empty" >&2
+        exit 1
+    fi
 
-# Validate Discord webhook URL format
-if [[ ! "$DISCORD_WEBHOOK" =~ ^https://discord(app)?\.com/api/webhooks/ ]]; then
-    echo "ERROR: Invalid Discord webhook URL format" >&2
-    exit 1
+    # Validate Discord webhook URL format
+    if [[ ! "$DISCORD_WEBHOOK" =~ ^https://discord(app)?\.com/api/webhooks/ ]]; then
+        echo "ERROR: Invalid Discord webhook URL format" >&2
+        exit 1
+    fi
 fi
 echo ""
 echo "Please confirm:"
@@ -90,8 +109,13 @@ echo "LOG_FILE=$LOG_FILE"
 echo "LOG_ROTATE_COUNT=$LOG_ROTATE_COUNT"
 echo "LOG_ROTATE_PERIOD=$LOG_ROTATE_PERIOD"
 echo "DISCORD_WEBHOOK=$DISCORD_WEBHOOK"
-read -p "Is this correct? (y/n): " CONFIRM
-[[ ! "$CONFIRM" =~ ^[Yy]$ ]] && { echo "Aborted"; exit 1; }
+
+if [[ -t 0 ]] && [[ -t 1 ]]; then
+    read -p "Is this correct? (y/n): " CONFIRM
+    [[ ! "$CONFIRM" =~ ^[Yy]$ ]] && { echo "Aborted"; exit 1; }
+else
+    echo "Proceeding with installation..."
+fi
 run_as_root tee "$CONFIG_FILE" > /dev/null <<EOF
 MAX_TEMP=$MAX_TEMP
 HOT_DURATION=$HOT_DURATION
