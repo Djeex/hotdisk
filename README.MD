@@ -57,7 +57,7 @@ tail -f /var/log/hdd_temp_monitor.log
 |-----------------------|-----------------------------------------------------------------|-----------------------------------------------|
 | `MAX_TEMP`            | Maximum allowed temperature (°C) before starting shutdown count | `60`                                          |
 | `HOT_DURATION`        | Consecutive minutes above `MAX_TEMP` before shutdown           | `5`                                           |
-| `COOL_DURATION`       | Consecutive minutes below `MAX_TEMP` required to reset counter | `5`                                           |
+| `COOL_RESET_DURATION` | Consecutive minutes below `MAX_TEMP` to reset all counters     | `5`                                           |
 | `LOG_FILE`            | Path to the main log file                                        | `/var/log/hdd_temp_monitor.log`               |
 | `LOG_ROTATE_COUNT`    | Number of log files to keep                                      | `7`                                           |
 | `LOG_ROTATE_PERIOD`   | Rotation period for logs (`daily` or `weekly`)                  | `daily`                                       |
